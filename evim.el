@@ -154,6 +154,9 @@ the mode, `toggle' toggles the state.")
    ("z" ,evim-z-keymap)
    ))
 
+(define-key evim-normal-mode-map (kbd "d") nil)
+(define-key evim-normal-mode-map (kbd "d") evim-delete-keymap)
+
 (defface evim-highlight
   '((t
      :inherit region

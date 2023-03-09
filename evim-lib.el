@@ -92,7 +92,7 @@
 (defun evim--yank (start end)
   "Save text from START to END position."
   (pulse-momentary-highlight-region start end)
-  (kill-ring-save start end))
+  (copy-region-as-kill start end))
 
 (evim-define-interface evim--yank "yank" "y")
 (skey-define-keys
@@ -115,12 +115,12 @@
 (defun evim-paste-at (pos)
   (save-excursion
     (goto-char pos)
-    (yank)))
+    (insert (current-kill 0))))
 
 (defun evim--paste (_ pos)
   (save-excursion
     (goto-char pos)
-    (yank)))
+    (insert (current-kill 0))))
 
 (evim-define-interface evim--paste "paste" "p")
 (emotion-define-cmd evim-P "Emulate VIM P command." #'evim--paste nil #'beginning-of-line)
@@ -153,9 +153,9 @@
 
 (defun evim-open-line-above ()
   (interactive)
-  (previous-line)
-  (end-of-line)
-  (newline-and-indent)
+  (beginning-of-line)
+  (save-excursion (insert "\n"))
+  (indent-according-to-mode)
   (state-transition 'evim-normal-mode 'evim-insert-mode))
 
 (defun evim-join ()
