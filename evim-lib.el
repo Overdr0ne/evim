@@ -189,7 +189,7 @@
 
 (defun evim-v ()
   (interactive)
-  (evim-transition-to 'evim-visual-mode))
+  (set-mark-command nil))
 
 (defun evim-V ()
   (interactive)
