@@ -239,6 +239,7 @@
 (skey-define-keys
  '(evim-g-keymap)
  `(
+   ("f" find-file-at-point)
    ("g" beginning-of-buffer)
    ("G" end-of-buffer)))
 
