@@ -30,22 +30,8 @@
 (require 'cl-extra)
 (require 'state)
 (require 'skey)
-
-(defun evim-motion-cmd (cmd start-motion end-motion)
-  (let ((beg (save-excursion
-               (when start-motion (funcall start-motion))
-               (point)))
-        (end (save-excursion
-               (when end-motion (funcall end-motion))
-               (point))))
-    (funcall cmd beg end)))
-
-(defmacro evim-define-normal-cmd (sym doc-str cmd start-motion end-motion)
-  `(progn
-     (defun ,sym ()
-	   ,doc-str
-	   (interactive)
-       (evim-motion-cmd ,cmd ,start-motion ,end-motion))))
+(require 'emotion)
+(require 'pulse)
 
 (defmacro evim-define-interface (cmd name prefix)
   `(let ((defs
@@ -75,19 +61,25 @@
               (cmd-keys (string-join (cl-subseq (split-string suff "") 1 -1) " ")))
          (defalias cmd-sym
            (lambda ()
-             doc-str
              (interactive)
-             (evim-motion-cmd ',cmd start-motion end-motion)))
-         (define-key keymap (kbd cmd-keys) cmd-sym)))
+             (emotion-cmd ',cmd start-motion end-motion)))
+         (define-key keymap (kbd cmd-keys) cmd-sym)
+         ))
      (set kmap-sym keymap)))
 
-(defun evim--delete (start end)
+(defun evim--delete (beg end)
   "Delete text from start to end."
-  (pulse-momentary-highlight-region start end)
-  (kill-region start end))
+  (pulse-momentary-highlight-region beg end 'pulse-highlight-face)
+  (kill-region beg end))
 
 (evim-define-interface evim--delete "delete" "d")
-(evim-define-normal-cmd evim-D "Emulate VIM D command." #'evim--delete nil #'end-of-line)
+(skey-define-keys
+ '(evim-delete-keymap)
+ `(
+   ("M-w" delete-forward-sexp)
+   ("M-b" delete-backward-sexp)
+   ))
+(emotion-define-cmd evim-D "Emulate VIM D command." #'evim--delete nil #'end-of-line)
 (defun evim-visual-delete ()
   "Delete region."
   (interactive)
@@ -101,8 +93,14 @@
   (kill-ring-save start end))
 
 (evim-define-interface evim--yank "yank" "y")
-(evim-define-normal-cmd evim-Y "Emulate VIM Y command." #'evim--yank nil #'end-of-line)
-(evim-define-normal-cmd evim-yank-sexp "Kill the following sexp." #'evim--yank nil #'forward-sexp)
+(skey-define-keys
+ '(evim-yank-keymap)
+ `(
+   ("M-w" yank-forward-sexp)
+   ("M-b" yank-backward-sexp)
+   ))
+(emotion-define-cmd evim-Y "Emulate VIM Y command." #'evim--yank nil #'end-of-line)
+(emotion-define-cmd evim-yank-sexp "Kill the following sexp." #'evim--yank nil #'forward-sexp)
 
 (defun evim--cut (start end)
   "Cut text from START to END position."
@@ -110,7 +108,7 @@
   (evil-insert 1))
 
 (evim-define-interface evim--cut "cut" "c")
-(evim-define-normal-cmd evim-C "Emulate VIM C command." #'evim--cut nil #'end-of-line)
+(emotion-define-cmd evim-C "Emulate VIM C command." #'evim--cut nil #'end-of-line)
 
 (defun evim-paste-at (pos)
   (save-excursion
@@ -123,7 +121,7 @@
     (yank)))
 
 (evim-define-interface evim--paste "paste" "p")
-(evim-define-normal-cmd evim-P "Emulate VIM P command." #'evim--paste nil #'beginning-of-line)
+(emotion-define-cmd evim-P "Emulate VIM P command." #'evim--paste nil #'beginning-of-line)
 
 (defun evim-pp ()
   (interactive)
@@ -260,6 +258,32 @@
    ("k" previous-line)
    ("l" forward-char)
    ))
+
+(defun evim-kmacro-insert-last ()
+  (interactive)
+  (kmacro-start-macro-or-insert-counter ))
+
+(defvar evim-kmacro-keymap (make-sparse-keymap))
+(skey-define-keys
+ '(evim-kmacro-keymap)
+ '(
+   ("s" kmacro-start-macro-or-insert-counter)
+   ("e" kmacro-end-or-call-macro)
+   ("i" kmacro-insert-counter)
+   ("q" consult-kmacro)
+   ))
+
+(defun evim-indent-line-left ()
+  (interactive)
+  (let* ((beg (line-beginning-position))
+         (end (line-end-position)))
+    (indent-rigidly-left beg end)))
+
+(defun evim-indent-line-right ()
+  (interactive)
+  (let* ((beg (line-beginning-position))
+         (end (line-end-position)))
+    (indent-rigidly-right beg end)))
 
 (provide 'evim-lib)
 ;;; evim-lib.el ends here
