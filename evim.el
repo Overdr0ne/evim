@@ -180,24 +180,23 @@ argument disables it.  From Lisp, argument omitted or nil enables
 the mode, `toggle' toggles the state.")
        :init-value nil
        :lighter ,(concat " Evim:" (symbol-name name))
-       :keymap ,(intern (concat "evim-" (symbol-name name) "-keymap"))
-       :group 'evim
-       (let ((mode-sym ',(intern (concat "evim-" (symbol-name name) "-mode")))
-             (enable-sym ',(intern (concat "evim--" (symbol-name name) "-mode-enable")))
-             (disable-sym ',(intern (concat "evim--" (symbol-name name) "-mode-disable"))))
-         (if (symbol-value mode-sym)
-             (funcall enable-sym)
-           (funcall disable-sym))))))
+       :keymap (make-sparse-keymap)
+       :group 'evim)))
 
-(defun evim-define-keys (keymaps defs)
-  (dolist (def defs)
-    (let* ((cmd-keys (nth 0 def))
-           (cmd-sym (nth 1 def))
-           (cmd-keys (if (stringp cmd-keys)
-                         (kbd cmd-keys)
-                       cmd-keys)))
-      (dolist (keymap keymaps)
-        (define-key (symbol-value keymap) cmd-keys cmd-sym)))))
+(defmacro evim-define-derived-mode (child parent)
+  `(progn
+     (define-minor-mode ,(intern (concat "evim-" (symbol-name parent) "-" (symbol-name child) "-mode"))
+       ,(concat "Toggle Evim " (symbol-name child) " derived from " (symbol-name parent) " minor mode.
+
+Interactively with no argument, this command toggles the mode.
+A positive prefix argument enables the mode, any other prefix
+argument disables it.  From Lisp, argument omitted or nil enables
+the mode, `toggle' toggles the state.")
+       :lighter ,(concat " Evim:" (symbol-name parent) ":" (symbol-name child))
+       :keymap (let ((map (make-sparse-keymap)))
+                 (set-keymap-parent map ,(intern (concat "evim-" (symbol-name parent) "-mode-map")))
+                 map)
+       :group 'evim)))
 
 (evim-define-mode insert)
 (evim-define-keys
