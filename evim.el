@@ -86,7 +86,15 @@
 
 (defmacro evim-define-interface (cmd name prefix)
   `(let ((defs
-           '((,prefix ,prefix beginning-of-line end-of-line)))
+           '((,prefix ,prefix beginning-of-line (lambda () (end-of-line) (forward-char)))
+             (,prefix "l" nil forward-char)
+             (,prefix "h" nil backward-char)
+             (,prefix "w" nil (lambda () (forward-to-word 1)))
+             (,prefix "b" nil backward-word)
+             (,prefix "e" nil forward-word)
+             (,prefix "iw" backward-word forward-word)
+             (,prefix "io" backward-sexp forward-sexp)
+             ))
          (keymap (make-sparse-keymap))
          (kmap-sym ',(intern (concat "evim-" name "-keymap"))))
      (defvar kmap-sym)
@@ -95,15 +103,15 @@
               (suff (nth 1 def))
               (start-motion (nth 2 def))
               (end-motion (nth 3 def))
-              (doc-str (concat "Emulate VIM " pref suff))
+              (doc-str (concat "Emulate VIM " pref suff " command."))
               (cmd-sym (intern (concat "evim-" pref suff)))
               (cmd-str (concat pref suff))
               (cmd-keys (string-join (cl-subseq (split-string cmd-str "") 1 -1) " ")))
          (defalias cmd-sym
            (lambda ()
-             doc-str
-             (interactive)
-             (evim-motion-cmd ,cmd start-motion end-motion)))
+              doc-str
+              (interactive)
+              (evim-motion-cmd ',cmd start-motion end-motion)))
          (define-key keymap cmd-keys cmd-sym)))
      (setq kmap-sym keymap)))
 
