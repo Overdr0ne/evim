@@ -49,11 +49,11 @@
   (evim-transition-to 'evim-insert-term-mode))
 
 (defun evim--visual-term-mode-enable ()
-  (setq-local cursor-type 'bar))
+  )
 (add-hook 'evim-visual-term-mode-on-hook #'evim--visual-term-mode-enable)
 
 (defun evim--normal-term-mode-enable ()
-  (setq-local cursor-type t))
+  )
 (add-hook 'evim-normal-term-mode-on-hook #'evim--normal-term-mode-enable)
 
 (skey-define-keys
@@ -100,7 +100,7 @@ process."
 	        (end-of-line)
 	        (term-send-input))
 	    (remove-function term-input-sender #'term-send-string))))
-  (setq-local cursor-type 'bar))
+  )
 (add-hook 'evim-insert-term-mode-on-hook #'evim--insert-term-mode-enable)
 
 (skey-define-keys

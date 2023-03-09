@@ -65,8 +65,11 @@ the mode, `toggle' toggles the state.")
                  (set-keymap-parent map ,(intern (concat "evim-" (symbol-name parent) "-mode-map")))
                  map)
        :group 'evim
-       (when ,(intern (concat "evim-" (symbol-name parent) "-" (symbol-name child) "-mode"))
-         (setq evim--current-mode ',(intern (concat "evim-" (symbol-name parent) "-" (symbol-name child) "-mode")))))))
+       (if ,(intern (concat "evim-" (symbol-name parent) "-" (symbol-name child) "-mode"))
+           (progn
+             (run-hooks ',(intern (concat "evim-" (symbol-name parent) "-mode-on-hook")))
+             (setq evim--current-mode ',(intern (concat "evim-" (symbol-name parent) "-" (symbol-name child) "-mode"))))
+         (run-hooks ',(intern (concat "evim-" (symbol-name parent) "-mode-off-hook")))))))
 
 (defun evim-transition-to (target-mode)
   "Transition from evim--curent-mode to TARGET-MODE."
