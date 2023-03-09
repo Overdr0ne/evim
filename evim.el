@@ -26,6 +26,7 @@
 
 (require 'dash)
 (require 'cl-macs)
+(require 'cl-extra)
 
 (defun evim--blend (a b alpha)
   "Return color A blended with color B by amount ALPHA."
@@ -76,83 +77,35 @@
                (point))))
     (funcall cmd beg end)))
 
-(defmacro evim-define-normal-cmd (cmd prefix start-motion suffix end-motion)
+(defmacro evim-define-normal-cmd (sym doc-str cmd start-motion end-motion)
   `(progn
-     (defun ,(intern (concat "evim-" prefix suffix)) ()
-	   ,(concat "Emulate vim " prefix suffix ".")
+     (defun ,sym ()
+	   ,doc-str
 	   (interactive)
-       (evim-motion-cmd ',cmd ',start-motion ',end-motion))))
+       (evim-motion-cmd ,cmd ,start-motion ,end-motion))))
 
-(evim-define-normal-cmd evim--delete "penis" nil "-butthole" backward-char)
-
-(defmacro evim-define-interface (cmd name prefix-char)
-  `(progn
-	 (defun ,(intern (concat "evim-" prefix-char prefix-char)) ()
-	   ,(concat "Emulate vim " prefix-char prefix-char ".")
-	   (interactive)
-       (evim-motion-cmd ',cmd 'beginning-of-line 'end-of-line))
-
-	 (defun ,(intern (concat "evim-" prefix-char "h")) ()
-	   ,(concat "Emulate vim " prefix-char "h.")
-	   (interactive)
-       (evim-motion-cmd ',cmd nil 'backward-char))
-
-	 (defun ,(intern (concat "evim-" prefix-char "j")) ()
-	   ,(concat "Emulate vim " prefix-char "j.")
-	   (interactive)
-       (evim-motion-cmd ',cmd nil 'next-line))
-
-	 (defun ,(intern (concat "evim-" prefix-char "k")) ()
-	   ,(concat "Emulate vim " prefix-char "k.")
-	   (interactive)
-       (evim-motion-cmd ',cmd nil 'previous-line))
-
-	 (defun ,(intern (concat "evim-" prefix-char "l")) ()
-	   ,(concat "Emulate vim " prefix-char "l.")
-	   (interactive)
-	   (evim-motion-cmd ',cmd nil 'forward-char))
-
-	 (defun ,(intern (concat "evim-" prefix-char "e")) ()
-	   ,(concat "Emulate vim " prefix-char "e.")
-	   (interactive)
-	   (evim-motion-cmd ',cmd nil 'forward-word))
-
-	 (defun ,(intern (concat "evim-" prefix-char "E")) ()
-	   ,(concat "Emulate vim " prefix-char "E.")
-	   (interactive)
-       (evim-motion-cmd ',cmd nil 'end-of-line))
-
-	 (defun ,(intern (concat "evim-" prefix-char "b")) ()
-	   ,(concat "Emulate vim " prefix-char "b.")
-	   (interactive)
-	   (evim-motion-cmd ',cmd nil 'backward-word))
-
-	 (defun ,(intern (concat "evim-" prefix-char "w")) ()
-	   ,(concat "Emulate vim " prefix-char "w.")
-	   (interactive)
-	   (evim-motion-cmd ',cmd nil '(lambda () (forward-to-word 1))))
-
-	 (defun ,(intern (concat "evim-" prefix-char "iw")) ()
-	   ,(concat "Emulate vim " prefix-char "iw.")
-	   (interactive)
-       (evim-motion-cmd ',cmd 'backward-word 'forward-word))
-
-	 (defun ,(intern (concat "evim-" prefix-char "io")) ()
-	   ,(concat "Emulate vim " prefix-char "io.")
-	   (interactive)
-       (evim-motion-cmd ',cmd 'backward-sexp 'forward-sexp))
-
-     (defvar ,(intern (concat "evim-" name "-keymap")) (make-sparse-keymap))
-     (general-define-key
-      :keymaps ',(intern (concat "evim-" name "-keymap"))
-      ;; ,prefix-char '(:ignore t :which-key name)
-      ,prefix-char  #',(intern (concat "evim-" prefix-char prefix-char))
-      ,"b"  #',(intern (concat "evim-" prefix-char "b"))
-      ,"e"  #',(intern (concat "evim-" prefix-char "e"))
-      ,"E"  #',(intern (concat "evim-" prefix-char "E"))
-      ,"iw"  #',(intern (concat "evim-" prefix-char "iw"))
-      ,"io"  #',(intern (concat "evim-" prefix-char "io")))
-     ))
+(defmacro evim-define-interface (cmd name prefix)
+  `(let ((defs
+           '((,prefix ,prefix beginning-of-line end-of-line)))
+         (keymap (make-sparse-keymap))
+         (kmap-sym ',(intern (concat "evim-" name "-keymap"))))
+     (defvar kmap-sym)
+     (dolist (def defs)
+       (let* ((pref (nth 0 def))
+              (suff (nth 1 def))
+              (start-motion (nth 2 def))
+              (end-motion (nth 3 def))
+              (doc-str (concat "Emulate VIM " pref suff))
+              (cmd-sym (intern (concat "evim-" pref suff)))
+              (cmd-str (concat pref suff))
+              (cmd-keys (string-join (cl-subseq (split-string cmd-str "") 1 -1) " ")))
+         (defalias cmd-sym
+           (lambda ()
+             doc-str
+             (interactive)
+             (evim-motion-cmd ,cmd start-motion end-motion)))
+         (define-key keymap cmd-keys cmd-sym)))
+     (setq kmap-sym keymap)))
 
 (defun evim--delete (start end)
   "Delete text from start to end."
@@ -211,8 +164,7 @@
  :keymaps 'evim-paste-keymap
  "p" '(:ignore t :which-key "paste")
  "j"  #'evim-paste-pj
- "k"  #'evim-paste-pk
- )
+ "k"  #'evim-paste-pk)
 
 (defvar evim-insert-keymap (make-composed-keymap '(text-mode-map)))
 (defvar evim-normal-keymap (make-sparse-keymap))
@@ -241,6 +193,11 @@ the mode, `toggle' toggles the state.")
 (evim-define-mode insert)
 (evim-define-mode normal)
 (evim-define-mode visual)
+
+(setf evim-normal-keymap
+      (make-composed-keymap (list evim-delete-keymap
+                                  evim-paste-keymap
+                                  evim-cut-keymap)))
 
 (provide 'evim)
 ;;; evim.el ends here
