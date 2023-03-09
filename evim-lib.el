@@ -149,14 +149,14 @@
   (interactive)
   (end-of-line)
   (newline-and-indent)
-  (state-transition 'evim-normal-mode 'evim-insert-mode))
+  (evim-transition-to 'evim-insert-mode))
 
 (defun evim-open-line-above ()
   (interactive)
   (beginning-of-line)
   (save-excursion (insert "\n"))
   (indent-according-to-mode)
-  (state-transition 'evim-normal-mode 'evim-insert-mode))
+  (evim-transition-to 'evim-insert-mode))
 
 (defun evim-join ()
   (interactive)
@@ -168,12 +168,12 @@
 (defun evim-A ()
   (interactive)
   (end-of-line)
-  (state-transition 'evim-normal-mode 'evim-insert-mode))
+  (evim-transition-to 'evim-insert-mode))
 
 (defun evim-a ()
   (interactive)
   (forward-char)
-  (state-transition 'evim-normal-mode 'evim-insert-mode))
+  (evim-transition-to 'evim-insert-mode))
 
 (defun evim-H ()
   (interactive)
@@ -181,7 +181,7 @@
 
 (defun evim-i ()
   (interactive)
-  (state-transition 'evim-normal-mode 'evim-insert-mode))
+  (evim-transition-to 'evim-insert-mode))
 
 (defun evim-L ()
   (interactive)
@@ -189,14 +189,14 @@
 
 (defun evim-v ()
   (interactive)
-  (state-transition 'evim-normal-mode 'evim-visual-mode))
+  (evim-transition-to 'evim-visual-mode))
 
 (defun evim-V ()
   (interactive)
   (save-excursion
     (next-line)
     (beginning-of-line)
-    (state-transition 'evim-normal-mode 'evim-visual-mode)))
+    (evim-transition-to 'evim-visual-mode)))
 
 (defun evim-x ()
   (interactive)

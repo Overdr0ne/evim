@@ -34,6 +34,7 @@
 (require 'skey)
 (require 'evim-lib)
 
+(defvar-local evim--current-mode nil)
 (defmacro evim-define-mode (name)
   `(progn
      (define-minor-mode ,(intern (concat "evim-" (symbol-name name) "-mode"))
@@ -69,6 +70,10 @@ the mode, `toggle' toggles the state.")
      (add-hook #',(intern (concat "evim-" (symbol-name parent) "-" (symbol-name child) "-mode-hook"))
                #',(intern (concat "evim-" (symbol-name parent) "-" (symbol-name child) "-run-parent-hooks"))
                )))
+
+(defun evim-transition-to (target-mode)
+  "Transition from evim--curent-mode to TARGET-MODE."
+  (state-transition evim--current-mode target-mode))
 
 (evim-define-mode insert)
 (skey-define-keys
