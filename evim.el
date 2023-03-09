@@ -72,7 +72,16 @@ the mode, `toggle' toggles the state.")
   "Transition from evim--curent-mode to TARGET-MODE."
   (state-transition evim--current-mode target-mode))
 
+(defun evim-escape ()
+  (interactive)
+  (evim-transition-to 'evim-normal-mode))
+
 (evim-define-mode insert)
+
+(defun evim--insert-mode-enable ()
+  (setq-local cursor-type 'bar))
+(add-hook 'evim-insert-mode-on-hook #'evim--insert-mode-enable)
+
 (skey-define-keys
  '(evim-insert-mode-map)
  '(
@@ -96,28 +105,18 @@ the mode, `toggle' toggles the state.")
 (evim-define-mode normal)
 
 (defun evim--activate-mark ()
-  (evim-visual-mode +1))
+  (evim-transition-to 'evim-visual-mode))
 (defun evim--deactivate-mark ()
-  (evim-visual-mode -1))
-;; (add-hook 'activate-mark-hook #'evim--activate-mark)
-;; (add-hook 'deactivate-mark-hook #'evim--deactivate-mark)
+  (evim-escape))
 (defun evim--normal-mode-enable ()
-  (interactive)
-  (when evim-normal-mode
-    (setq-local cursor-type t)
-    (add-hook 'activate-mark-hook #'evim--activate-mark 0 t)
-    (add-hook 'deactivate-mark-hook #'evim--deactivate-mark 0 t)
-    ))
-(add-hook 'evim-normal-mode-hook #'evim--normal-mode-enable)
-(defun evim--normal-mode-disable ()
-  (interactive)
-  (unless evim-normal-mode
-    ))
-(add-hook 'evim-normal-mode-hook #'evim--normal-mode-disable)
+  (setq-local cursor-type t)
+  ;; TODO: find a cleaner way to add these hooks only when
+  ;; when a given evim mode is being used.
+  (add-hook 'activate-mark-hook #'evim--activate-mark 0 t)
+  (add-hook 'deactivate-mark-hook #'evim--deactivate-mark 0 t))
+(add-hook 'evim-normal-mode-on-hook #'evim--normal-mode-enable)
 
 (define-key evim-normal-mode-map [control-bracketleft] #'evim-normal-mode)
-(add-hook 'evim-insert-mode-hook (lambda () (when evim-insert-mode (setq-local cursor-type 'bar))))
-;; (add-hook 'evim-insert-mode-hook (lambda () (when (not evim-insert-mode) (setq-local cursor-type t))))
 
 (skey-define-keys
  '(evim-normal-mode-map)
@@ -181,12 +180,9 @@ the mode, `toggle' toggles the state.")
 (define-key evim-normal-mode-map (kbd "d") evim-delete-keymap)
 
 (defun evim--visual-mode-enable ()
-  (when evim-visual-mode
-    (setq-local cursor-type 'bar)))
-(add-hook 'evim-visual-mode-hook #'evim--visual-mode-enable)
-(defun evim--visual-mode-disable ()
-  (unless evim-visual-mode (evim-normal-mode +1)))
-(add-hook 'evim-visual-mode-hook #'evim--visual-mode-disable)
+  (setq-local cursor-type 'bar))
+(add-hook 'evim-visual-mode-on-hook #'evim--visual-mode-enable)
+
 (skey-define-keys
  '(evim-visual-mode-map)
  '(
@@ -199,10 +195,6 @@ the mode, `toggle' toggles the state.")
    ("y" copy-region-as-kill)))
 
 (require 'evim-term)
-
-;;; evim
-(dolist (hook '(prog-mode-hook conf-mode-hook Info-mode-hook))
-  (add-hook hook #'evim-normal-mode))
 
 (provide 'evim)
 ;;; evim.el ends here

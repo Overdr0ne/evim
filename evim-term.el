@@ -49,8 +49,12 @@
   (evim-transition-to 'evim-insert-term-mode))
 
 (defun evim--visual-term-mode-enable ()
-  (when evim-visual-term-mode (setq-local cursor-type 'bar)))
-(add-hook 'evim-visual-term-mode-hook #'evim--visual-term-mode-enable)
+  (setq-local cursor-type 'bar))
+(add-hook 'evim-visual-term-mode-on-hook #'evim--visual-term-mode-enable)
+
+(defun evim--normal-term-mode-enable ()
+  (setq-local cursor-type t))
+(add-hook 'evim-normal-term-mode-on-hook #'evim--normal-term-mode-enable)
 
 (skey-define-keys
  '(evim-normal-term-mode-map)
@@ -64,12 +68,10 @@
 This means that Emacs editing commands work as normally, until
 you type \\[term-send-input] which sends the current line to the inferior."
   (interactive)
-  (unless evim-insert-term-mode
-    ;; (when term-char-mode-buffer-read-only
-    ;;   (setq buffer-read-only term-line-mode-buffer-read-only))
-    (remove-hook 'pre-command-hook #'term-set-goto-process-mark t)
-    (remove-hook 'post-command-hook #'term-goto-process-mark-maybe t)))
-(add-hook 'evim-insert-term-mode-hook #'evim--insert-term-mode-disable)
+
+  (remove-hook 'pre-command-hook #'term-set-goto-process-mark t)
+  (remove-hook 'post-command-hook #'term-goto-process-mark-maybe t))
+(add-hook 'evim-insert-term-mode-off-hook #'evim--insert-term-mode-disable)
 
 (defun evim--insert-term-mode-enable ()
   "Switch to char (\"raw\") sub-mode of term mode.
@@ -79,48 +81,34 @@ intervention from Emacs, except for the escape character (usually C-c).
 This command will send existing partial lines to the terminal
 process."
   (interactive)
-  ;; FIXME: Emit message? Cfr ilisp-raw-message
-  (when evim-insert-term-mode
-    (setq term-old-mode-map (current-local-map))
-    (use-local-map term-raw-map)
 
-    ;; Don't allow changes to the buffer or to point which are not
-    ;; caused by the process filter.
-    (setq buffer-read-only t)
-    (add-hook 'pre-command-hook #'term-set-goto-process-mark nil t)
-    (add-hook 'post-command-hook #'term-goto-process-mark-maybe nil t)
+  (setq term-old-mode-map (current-local-map))
+  (use-local-map term-raw-map)
 
-    ;; Send existing partial line to inferior (without newline).
-    (let ((pmark (process-mark (get-buffer-process (current-buffer)))))
-      (when (> (point) pmark)
-	    (unwind-protect
-	        (progn
-	          (add-function :override term-input-sender #'term-send-string)
-	          (end-of-line)
-	          (term-send-input))
-	      (remove-function term-input-sender #'term-send-string))))
-    ;; (term-update-mode-line)
-    (setq-local cursor-type 'bar))
-  )
-(add-hook 'evim-insert-term-mode-hook #'evim--insert-term-mode-enable)
+  ;; Don't allow changes to the buffer or to point which are not
+  ;; caused by the process filter.
+  (setq buffer-read-only t)
+  (add-hook 'pre-command-hook #'term-set-goto-process-mark nil t)
+  (add-hook 'post-command-hook #'term-goto-process-mark-maybe nil t)
 
-(defun evim--term-activate-mark ()
-  (evim-transition-to 'evim-visual-term-mode))
-(defun evim--term-deactivate-mark ()
-  (evim-term-escape))
-;; (add-hook 'activate-mark-hook #'evim--term-activate-mark)
-;; (add-hook 'deactivate-mark-hook #'evim--term-deactivate-mark)
-(defun evim--normal-term-mode-enable ()
-  (when evim-normal-term-mode
-    (setq-local cursor-type t)))
-(add-hook 'evim-normal-term-mode-hook #'evim--normal-term-mode-enable)
+  ;; Send existing partial line to inferior (without newline).
+  (let ((pmark (process-mark (get-buffer-process (current-buffer)))))
+    (when (> (point) pmark)
+	  (unwind-protect
+	      (progn
+	        (add-function :override term-input-sender #'term-send-string)
+	        (end-of-line)
+	        (term-send-input))
+	    (remove-function term-input-sender #'term-send-string))))
+  (setq-local cursor-type 'bar))
+(add-hook 'evim-insert-term-mode-on-hook #'evim--insert-term-mode-enable)
 
 (skey-define-keys
  '(evim-insert-term-mode-map)
  `(
    ("M-;" execute-extended-command)
    ("M-SPC" execute-extended-command)
-   ("<return>" term-send-input)
+   ("<return>" (lambda () (interactive) (term-send-raw-string "\C-m")))
    ("<tab>" (lambda () (interactive) (term-send-raw-string "\t")))
    ("C-a" term-send-raw)
    ("C-b" term-send-left)
@@ -231,9 +219,12 @@ process."
    ("X" term-send-raw)
    ("Y" term-send-raw)
    ("Z" term-send-raw)
-   ("<C-[>" evim-term-escape)
-   ))
+   ("<C-[>" evim-term-escape)))
 
+(defun evim--term-activate-mark ()
+  (evim-transition-to 'evim-visual-term-mode))
+(defun evim--term-deactivate-mark ()
+  (evim-term-escape))
 (defun evim-term-setup (program)
   (setq term-ansi-buffer-name
 	    (if term-ansi-buffer-base-name
@@ -243,11 +234,6 @@ process."
 	      "ansi-term"))
 
   (setq term-ansi-buffer-name (concat "*" term-ansi-buffer-name "*"))
-
-  ;; In order to have more than one term active at a time
-  ;; I'd like to have the term names have the *term-ansi-term<?>* form,
-  ;; for now they have the *term-ansi-term*<?> form but we'll see...
-
   (setq term-ansi-buffer-name (generate-new-buffer-name term-ansi-buffer-name))
   (setq term-ansi-buffer-name (term-ansi-make-term term-ansi-buffer-name program))
   (set-buffer term-ansi-buffer-name)
@@ -257,16 +243,6 @@ process."
 
   (add-hook 'activate-mark-hook #'evim--term-activate-mark 0 t)
   (add-hook 'deactivate-mark-hook #'evim--term-deactivate-mark 0 t)
-  ;; Historical baggage.  A call to term-set-escape-char used to not
-  ;; undo any previous call to t-s-e-c.  Because of this, ansi-term
-  ;; ended up with both C-x and C-c as escape chars.  Who knows what
-  ;; the original intention was, but people could have become used to
-  ;; either.   (Bug#12842)
-  (let (term-escape-char)
-    ;; I wanna have find-file on C-x C-f -mm
-    ;; your mileage may definitely vary, maybe it's better to put this in your
-    ;; .emacs ...
-    (term-set-escape-char ?\C-x))
   )
 
 (defun evim--term (program)
@@ -277,6 +253,7 @@ and `C-x' being marked as a `term-escape-char'."
   (switch-to-buffer term-ansi-buffer-name))
 (defun evim-term ()
   (interactive)
+
   (evim--term (getenv "SHELL")))
 
 (defun evim-term-side ()
