@@ -143,7 +143,7 @@
 
 (defun evim-pp ()
   (interactive)
-  (evim-paste-at (1+ (point))))
+  (evim-paste-at (point)))
 
 (defun evim-pP ()
   (interactive)
