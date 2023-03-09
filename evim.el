@@ -117,6 +117,7 @@
 
 (evim-define-interface evim--yank "yank" "y")
 (evim-define-normal-cmd evim-Y "Emulate VIM Y command." #'evim--yank nil #'end-of-line)
+(evim-define-normal-cmd evim-yank-sexp "Kill the following sexp." #'evim--yank nil #'forward-sexp)
 
 (defun evim--cut (start end)
   "Cut text from START to END position."
