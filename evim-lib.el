@@ -187,10 +187,6 @@
   (interactive)
   (move-to-window-line -1))
 
-(defun evim-v ()
-  (interactive)
-  (set-mark-command nil))
-
 (defun evim-V ()
   (interactive)
   (save-excursion

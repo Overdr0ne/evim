@@ -26,84 +26,38 @@
 
 (require 'term)
 
-(defun evim-visual-term-escape ()
-  (interactive)
-  (state-transition 'evim-visual-term-mode 'evim-normal-term-mode))
+(evim-define-derived-mode term normal)
+(evim-define-derived-mode term visual)
+(evim-define-derived-mode term insert)
 
-(defun evim-insert-term-escape ()
+(defun evim-term-escape ()
   (interactive)
-  (state-transition 'evim-insert-term-mode 'evim-normal-term-mode))
+  (evim-transition-to 'evim-normal-term-mode))
 
 (defun evim-term-A ()
   (interactive)
   (end-of-line)
-  (state-transition 'evim-normal-term-mode 'evim-insert-term-mode))
+  (evim-transition-to 'evim-insert-term-mode))
 
 (defun evim-term-a ()
   (interactive)
   (forward-char)
-  (state-transition 'evim-normal-term-mode 'evim-insert-term-mode))
+  (evim-transition-to 'evim-insert-term-mode))
 
 (defun evim-term-i ()
   (interactive)
-  (state-transition 'evim-normal-term-mode 'evim-insert-term-mode))
-
-(defun evim-term-v ()
-  (interactive)
-  (state-transition 'evim-normal-term-mode 'evim-visual-term-mode))
+  (evim-transition-to 'evim-insert-term-mode))
 
 (defun evim--visual-term-mode-enable ()
-  (interactive)
-  (when evim-visual-term-mode
-    (setq mark-active t)
-    (setq-local cursor-type 'bar)
-    (evim-set-marker)
-    (add-hook 'post-command-hook 'evim-highlight-region 0 t)))
+  (when evim-visual-term-mode (setq-local cursor-type 'bar)))
 (add-hook 'evim-visual-term-mode-hook #'evim--visual-term-mode-enable)
-(defun evim--visual-term-mode-disable ()
-  (interactive)
-  (unless evim-visual-term-mode
-    (setq mark-active nil)
-    (setq-local cursor-type t)
-    (remove-hook 'post-command-hook 'evim-highlight-region t)
-    (evim-unhighlight-region)))
-(add-hook 'evim-visual-term-mode-hook #'evim--visual-term-mode-disable)
-(defun evim-term-d ()
-  (interactive)
-  (kill-region (marker-position (mark-marker)) (point))
-  (state-transition 'evim-visual-term-mode 'evim-normal-term-mode))
-(defun evim-term-y ()
-  (interactive)
-  (copy-region-as-kill (marker-position (mark-marker)) (point))
-  (state-transition 'evim-visual-term-mode 'evim-normal-term-mode))
-(defun evim-visual-term-escape ()
-  (interactive)
-  (state-transition 'evim-visual-term-mode 'evim-normal-term-mode))
-(defun evim-term-/ ()
-  (interactive)
-  (comment-or-uncomment-region (marker-position (mark-marker)) (point))
-  (state-transition 'evim-visual-term-mode 'evim-normal-term-mode))
-
-(evim-define-derived-mode term normal)
-(evim-define-derived-mode term visual)
 
 (skey-define-keys
  '(evim-normal-term-mode-map)
  `(
    ("a" evim-term-a)
    ("A" evim-term-A)
-   ("i" evim-term-i)
-   ("v" evim-term-v)
-   ))
-
-(skey-define-keys
- '(evim-visual-term-mode-map)
- `(
-   ("C-g" evim-visual-term-escape)
-   ("<C-[>" evim-visual-term-escape)
-   ("d" evim-term-d)
-   ("y" evim-term-y)
-   ))
+   ("i" evim-term-i)))
 
 (defun evim--insert-term-mode-disable  ()
   "Switch to line (\"cooked\") sub-mode of term mode.
@@ -111,11 +65,10 @@ This means that Emacs editing commands work as normally, until
 you type \\[term-send-input] which sends the current line to the inferior."
   (interactive)
   (unless evim-insert-term-mode
-    (when term-char-mode-buffer-read-only
-      (setq buffer-read-only term-line-mode-buffer-read-only))
+    ;; (when term-char-mode-buffer-read-only
+    ;;   (setq buffer-read-only term-line-mode-buffer-read-only))
     (remove-hook 'pre-command-hook #'term-set-goto-process-mark t)
-    (remove-hook 'post-command-hook #'term-goto-process-mark-maybe t)
-    ))
+    (remove-hook 'post-command-hook #'term-goto-process-mark-maybe t)))
 (add-hook 'evim-insert-term-mode-hook #'evim--insert-term-mode-disable)
 
 (defun evim--insert-term-mode-enable ()
@@ -133,8 +86,7 @@ process."
 
     ;; Don't allow changes to the buffer or to point which are not
     ;; caused by the process filter.
-    (when term-char-mode-buffer-read-only
-      (setq buffer-read-only t))
+    (setq buffer-read-only t)
     (add-hook 'pre-command-hook #'term-set-goto-process-mark nil t)
     (add-hook 'post-command-hook #'term-goto-process-mark-maybe nil t)
 
@@ -147,23 +99,32 @@ process."
 	          (end-of-line)
 	          (term-send-input))
 	      (remove-function term-input-sender #'term-send-string))))
-    (term-update-mode-line))
+    ;; (term-update-mode-line)
+    (setq-local cursor-type 'bar))
   )
 (add-hook 'evim-insert-term-mode-hook #'evim--insert-term-mode-enable)
 
-(evim-define-derived-mode term insert)
-(add-hook 'evim-normal-term-mode-hook (lambda () (when evim-normal-term-mode (setq-local cursor-type t))))
-(add-hook 'evim-insert-term-mode-hook (lambda () (when evim-insert-term-mode (setq-local cursor-type 'bar))))
+(defun evim--term-activate-mark ()
+  (evim-transition-to 'evim-visual-term-mode))
+(defun evim--term-deactivate-mark ()
+  (evim-term-escape))
+;; (add-hook 'activate-mark-hook #'evim--term-activate-mark)
+;; (add-hook 'deactivate-mark-hook #'evim--term-deactivate-mark)
+(defun evim--normal-term-mode-enable ()
+  (when evim-normal-term-mode
+    (setq-local cursor-type t)))
+(add-hook 'evim-normal-term-mode-hook #'evim--normal-term-mode-enable)
+
 (skey-define-keys
  '(evim-insert-term-mode-map)
  `(
    ("M-;" execute-extended-command)
    ("M-SPC" execute-extended-command)
-   ("<return>" (lambda () (interactive) (term-send-raw-string "\C-m")))
+   ("<return>" term-send-input)
    ("<tab>" (lambda () (interactive) (term-send-raw-string "\t")))
-   ("C-a" term-send-home)
+   ("C-a" term-send-raw)
    ("C-b" term-send-left)
-   ("C-d" term-send-del)
+   ("C-d" term-delchar-or-maybe-eof)
    ("C-e" term-send-end)
    ("C-f" term-send-right)
    ("C-h" term-send-backspace)
@@ -174,6 +135,7 @@ process."
 
    ("<backspace>" term-send-backspace)
    ("SPC" term-send-raw)
+   ("~" term-send-raw)
    ("!" term-send-raw)
    ("@" term-send-raw)
    ("#" term-send-raw)
@@ -269,7 +231,7 @@ process."
    ("X" term-send-raw)
    ("Y" term-send-raw)
    ("Z" term-send-raw)
-   ("<C-[>" evim-insert-term-escape)
+   ("<C-[>" evim-term-escape)
    ))
 
 (defun evim-term-setup (program)
@@ -293,6 +255,8 @@ process."
   (term-mode)
   (evim-insert-term-mode +1)
 
+  (add-hook 'activate-mark-hook #'evim--term-activate-mark 0 t)
+  (add-hook 'deactivate-mark-hook #'evim--term-deactivate-mark 0 t)
   ;; Historical baggage.  A call to term-set-escape-char used to not
   ;; undo any previous call to t-s-e-c.  Because of this, ansi-term
   ;; ended up with both C-x and C-c as escape chars.  Who knows what
