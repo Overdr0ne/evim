@@ -109,9 +109,9 @@
               (cmd-keys (string-join (cl-subseq (split-string cmd-str "") 1 -1) " ")))
          (defalias cmd-sym
            (lambda ()
-              doc-str
-              (interactive)
-              (evim-motion-cmd ',cmd start-motion end-motion)))
+             doc-str
+             (interactive)
+             (evim-motion-cmd ',cmd start-motion end-motion)))
          (define-key keymap cmd-keys cmd-sym)))
      (setq kmap-sym keymap)))
 
@@ -182,6 +182,8 @@
 
 (defmacro evim-define-mode (name)
   `(progn
+     (defun ,(intern (concat "evim--" (symbol-name name) "-mode-enable")) nil)
+     (defun ,(intern (concat "evim--" (symbol-name name) "-mode-disable")) nil)
      (define-minor-mode ,(intern (concat "evim-" (symbol-name name) "-mode"))
        ,(concat "Toggle Evim " (symbol-name name) " minor mode.
 
@@ -193,19 +195,48 @@ the mode, `toggle' toggles the state.")
        :lighter ,(concat " Evim:" (symbol-name name))
        :keymap ,(intern (concat "evim-" (symbol-name name) "-keymap"))
        :group 'evim
-       (when (not (equal evim-cur-mode
-                         ',(intern (concat "evim-" (symbol-name name) "-mode"))))
-         (set evim-cur-mode nil)
-         (setf evim-cur-mode ',(intern (concat "evim-" (symbol-name name) "-mode")))))))
+       (let ((mode-sym ',(intern (concat "evim-" (symbol-name name) "-mode")))
+             (enable-sym ',(intern (concat "evim--" (symbol-name name) "-mode-enable")))
+             (disable-sym ',(intern (concat "evim--" (symbol-name name) "-mode-disable"))))
+         (when (not (equal evim-cur-mode mode-sym))
+           (set evim-cur-mode nil)
+           (setf evim-cur-mode mode-sym))
+         (if (symbol-value mode-sym)
+             (funcall enable-sym)
+           (funcall disable-sym))))))
+
+(defun evim-define-keys (keymaps defs)
+  (dolist (def defs)
+    (let ((cmd-keys (nth 0 def))
+          (cmd-sym (nth 1 def)))
+      (dolist (keymap keymaps)
+        (define-key (symbol-value keymap) (kbd cmd-keys) cmd-sym)))))
 
 (evim-define-mode insert)
-(evim-define-mode normal)
-(evim-define-mode visual)
+(evim-define-keys
+ '(evim-insert-keymap)
+ '(("'"   #'(lambda () (interactive) (insert "'")))
+   ("C-a" beginning-of-line)
+   ("C-e" end-of-line)
+   ("C-f" forward-char)
+   ("C-b" backward-char)
+   ("C-n" next-line)
+   ("C-p" previous-line)
+   ("C-s" isearch-forward)
+   ("M-s" isearch-repeat-forward)
+   ("C-h" xah-delete-backward-char-or-bracket-text)
+   ("M-h" xah-delete-backward-bracket-text)
+   ("M-w" forward-word)
+   ("M-b" backward-word)
+   ;; Smarter newlines
+   ("<return>" newline-and-indent)  ; auto-indent on newline
+   ("C-v" yank)))
 
-(setf evim-normal-keymap
-      (make-composed-keymap (list evim-delete-keymap
-                                  evim-paste-keymap
-                                  evim-cut-keymap)))
+(evim-define-mode normal)
+
+(evim-define-mode visual)
+(defun evim--visual-mode-enable () (set-mark-command nil))
+(defun evim--visual-mode-disable () (keyboard-quit))
 
 (provide 'evim)
 ;;; evim.el ends here
