@@ -28,6 +28,7 @@
 (define-key input-decode-map [?\C-\[] (kbd "<C-[>"))
 (define-key input-decode-map [?\C-m] (kbd "<C-m>"))
 (define-key input-decode-map [? ] (kbd "SPC"))
+(define-key input-decode-map [?\C-j] (kbd "C-j"))
 
 (provide 'untermin)
 ;;; untermin.el ends here

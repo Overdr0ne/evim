@@ -233,6 +233,7 @@ the mode, `toggle' toggles the state.")
    ("y" copy-region-as-kill)))
 
 (require 'evim-term)
+(require 'evim-lisp)
 
 (provide 'evim)
 ;;; evim.el ends here
