@@ -58,14 +58,14 @@
     (setq mark-active t)
     (setq-local cursor-type 'bar)
     (evim-set-marker)
-    (add-hook 'post-command-hook 'evim-highlight-region)))
+    (add-hook 'post-command-hook 'evim-highlight-region 0 t)))
 (add-hook 'evim-visual-term-mode-hook #'evim--visual-term-mode-enable)
 (defun evim--visual-term-mode-disable ()
   (interactive)
   (unless evim-visual-term-mode
     (setq mark-active nil)
     (setq-local cursor-type t)
-    (remove-hook 'post-command-hook 'evim-highlight-region)
+    (remove-hook 'post-command-hook 'evim-highlight-region t)
     (evim-unhighlight-region)))
 (add-hook 'evim-visual-term-mode-hook #'evim--visual-term-mode-disable)
 (defun evim-term-d ()
@@ -159,7 +159,7 @@ process."
  `(
    ("M-;" execute-extended-command)
    ("M-SPC" execute-extended-command)
-   ("<return>" (lambda () (interactive) (term-send-raw-string "\n")))
+   ("<return>" (lambda () (interactive) (term-send-raw-string "\C-m")))
    ("<tab>" (lambda () (interactive) (term-send-raw-string "\t")))
    ("C-a" term-send-home)
    ("C-b" term-send-left)
@@ -167,6 +167,7 @@ process."
    ("C-e" term-send-end)
    ("C-f" term-send-right)
    ("C-h" term-send-backspace)
+   ("<C-m>" (lambda () (interactive) (term-send-raw-string "\C-m")))
    ("C-n" term-send-down)
    ("C-p" term-send-up)
    ("C-v" term-primary-yank)
@@ -187,8 +188,10 @@ process."
    ("\\" term-send-raw)
    ("/" term-send-raw)
    ("'" term-send-raw)
+   ("\"" term-send-raw)
    ("-" term-send-raw)
    ("=" term-send-raw)
+
    ("1" term-send-raw)
    ("2" term-send-raw)
    ("3" term-send-raw)
@@ -212,6 +215,7 @@ process."
    ("?" term-send-raw)
    (":" term-send-raw)
    (";" term-send-raw)
+
    ("a" term-send-raw)
    ("b" term-send-raw)
    ("c" term-send-raw)
@@ -238,27 +242,43 @@ process."
    ("x" term-send-raw)
    ("y" term-send-raw)
    ("z" term-send-raw)
+
+   ("A" term-send-raw)
+   ("B" term-send-raw)
+   ("C" term-send-raw)
+   ("D" term-send-raw)
+   ("E" term-send-raw)
+   ("F" term-send-raw)
+   ("G" term-send-raw)
+   ("H" term-send-raw)
+   ("I" term-send-raw)
+   ("J" term-send-raw)
+   ("K" term-send-raw)
+   ("L" term-send-raw)
+   ("M" term-send-raw)
+   ("N" term-send-raw)
+   ("O" term-send-raw)
+   ("P" term-send-raw)
+   ("Q" term-send-raw)
+   ("R" term-send-raw)
+   ("S" term-send-raw)
+   ("T" term-send-raw)
+   ("U" term-send-raw)
+   ("V" term-send-raw)
+   ("W" term-send-raw)
+   ("X" term-send-raw)
+   ("Y" term-send-raw)
+   ("Z" term-send-raw)
    ("<C-[>" evim-insert-term-escape)
    ))
 
-(defun evim-ansi-term (program &optional new-buffer-name)
-  "Start a terminal-emulator in a new buffer.
-This is almost the same as `term' apart from always creating a new buffer,
-and `C-x' being marked as a `term-escape-char'."
-  (interactive (list (read-from-minibuffer "Run program: "
-					                       (or explicit-shell-file-name
-					                           (getenv "ESHELL")
-					                           shell-file-name))))
-
-  ;; Pick the name of the new buffer.
+(defun evim-term-setup (program)
   (setq term-ansi-buffer-name
-	    (if new-buffer-name
-	        new-buffer-name
-	      (if term-ansi-buffer-base-name
-	          (if (eq term-ansi-buffer-base-name t)
-		          (file-name-nondirectory program)
-		        term-ansi-buffer-base-name)
-	        "ansi-term")))
+	    (if term-ansi-buffer-base-name
+	        (if (eq term-ansi-buffer-base-name t)
+		        (file-name-nondirectory program)
+		      term-ansi-buffer-base-name)
+	      "ansi-term"))
 
   (setq term-ansi-buffer-name (concat "*" term-ansi-buffer-name "*"))
 
@@ -268,8 +288,8 @@ and `C-x' being marked as a `term-escape-char'."
 
   (setq term-ansi-buffer-name (generate-new-buffer-name term-ansi-buffer-name))
   (setq term-ansi-buffer-name (term-ansi-make-term term-ansi-buffer-name program))
-
   (set-buffer term-ansi-buffer-name)
+
   (term-mode)
   (evim-insert-term-mode +1)
 
@@ -283,8 +303,26 @@ and `C-x' being marked as a `term-escape-char'."
     ;; your mileage may definitely vary, maybe it's better to put this in your
     ;; .emacs ...
     (term-set-escape-char ?\C-x))
+  )
 
+(defun evim--term (program)
+  "Start a terminal-emulator in a new buffer.
+This is almost the same as `term' apart from always creating a new buffer,
+and `C-x' being marked as a `term-escape-char'."
+  (evim-term-setup program)
   (switch-to-buffer term-ansi-buffer-name))
+(defun evim-term ()
+  (interactive)
+  (evim--term (getenv "SHELL")))
+
+(defun evim-term-side ()
+  "Start a terminal-emulator in a new buffer.
+This is almost the same as `term' apart from always creating a new buffer,
+and `C-x' being marked as a `term-escape-char'."
+  (interactive)
+
+  (evim-term-setup (getenv "SHELL"))
+  (pop-to-buffer term-ansi-buffer-name))
 
 (provide 'evim-term)
 ;;; evim-term.el ends here
