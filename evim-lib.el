@@ -62,14 +62,16 @@
          (defalias cmd-sym
            (lambda ()
              (interactive)
-             (emotion-cmd ',cmd start-motion end-motion)))
+             (emotion-cmd ',cmd start-motion end-motion))
+           doc-str)
          (define-key keymap (kbd cmd-keys) cmd-sym)
          ))
      (set kmap-sym keymap)))
 
 (defun evim--delete (beg end)
   "Delete text from start to end."
-  (pulse-momentary-highlight-region beg end 'pulse-highlight-face)
+  (pulse-momentary-highlight-region beg end)
+  (sit-for (+ pulse-delay .1))
   (kill-region beg end))
 
 (evim-define-interface evim--delete "delete" "d")
