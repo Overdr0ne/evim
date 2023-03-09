@@ -26,9 +26,7 @@
 ;;; Code:
 
 (define-key input-decode-map [?\C-\[] (kbd "<C-[>"))
-;; (define-key input-decode-map [?\C-m] [C-m])
 (define-key input-decode-map [?\C-m] (kbd "<C-m>"))
-;; (define-key input-decode-map [?\C-:] (kbd "<C-;>"))
 (define-key input-decode-map [? ] (kbd "SPC"))
 
 (provide 'untermin)
