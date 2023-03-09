@@ -427,5 +427,31 @@ the mode, `toggle' toggles the state.")
    ("d" evim-kill-region)
    ("y" evim-copy-region-as-kill)))
 
+(evim-define-derived-mode term normal)
+(skey-define-keys
+ '(evim-normal-term-mode-map)
+ `(
+   ("i" (lambda () (interactive) (state-transition 'evim-normal-term-mode 'evim-insert-term-mode)))
+   ))
+
+(evim-define-derived-mode term insert)
+(skey-define-keys
+ '(evim-insert-term-mode-map)
+ `(
+   ("SPC" term-send-raw)
+   ("RET" term-send-return)
+   ("<tab>" (lambda () (interactive) (term-send-raw-string "\t")))
+   ("C-a" term-send-home)
+   ("C-b" term-send-left)
+   ("C-d" term-send-del)
+   ("C-e" term-send-end)
+   ("C-f" term-send-right)
+   ("C-h" term-send-backspace)
+   ("C-n" term-send-down)
+   ("C-p" term-send-up)
+   ("C-v" yank)
+   ("<C-[>" (lambda () (interactive) (state-transition 'evim-insert-term-mode 'evim-normal-term-mode)))
+   ))
+
 (provide 'evim)
 ;;; evim.el ends here
