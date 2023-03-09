@@ -26,13 +26,14 @@
 
 (add-to-list 'load-path (file-name-directory (f-this-file)))
 
-(require 'untermin)
 (require 'dash)
 (require 'cl-macs)
 (require 'cl-extra)
 (require 'state)
 (require 'skey)
 (require 'evim-lib)
+(require 'line-mark)
+(require 'untermin)
 
 (defvar-local evim--current-mode nil)
 (defmacro evim-define-mode (name)
@@ -87,7 +88,8 @@ the mode, `toggle' toggles the state.")
 
 (skey-define-keys
  '(evim-insert-mode-map)
- '(
+ `(
+   ("M-x" execute-extended-command)
    (";" self-insert-command)
    ("?" self-insert-command)
    ("SPC" self-insert-command)
@@ -102,7 +104,8 @@ the mode, `toggle' toggles the state.")
    ("C-v" yank)
    ("C-h" xah-delete-backward-char-or-bracket-text)
    ("<return>" newline-and-indent)
-   ("<C-[>" (lambda () (interactive) (state-transition 'evim-insert-mode 'evim-normal-mode))))
+   ("<C-[>" evim-escape)
+   )
  )
 
 (evim-define-mode normal)
@@ -119,8 +122,6 @@ the mode, `toggle' toggles the state.")
   (add-hook 'deactivate-mark-hook #'evim--deactivate-mark 0 t))
 (add-hook 'evim-normal-mode-on-hook #'evim--normal-mode-enable)
 
-(define-key evim-normal-mode-map [control-bracketleft] #'evim-normal-mode)
-
 (skey-define-keys
  '(evim-normal-mode-map)
  `(
@@ -128,9 +129,6 @@ the mode, `toggle' toggles the state.")
    ("= a" sam-indent-all)
    ("<" evim-indent-line-left)
    (">" evim-indent-line-right)
-   ("D" evim-D)
-   ("P" evim-P)
-   ("Y" evim-Y)
    ))
 
 (evim-define-mode visual)
@@ -189,6 +187,8 @@ the mode, `toggle' toggles the state.")
 (skey-define-keys
  '(evim-visual-mode-map)
  '(
+   ("M-x" execute-extended-command)
+   ("=" indent-region)
    (">" indent-rigidly-right)
    ("<" indent-rigidly-left)
    ("/" comment-or-uncomment-region)

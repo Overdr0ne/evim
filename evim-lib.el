@@ -23,7 +23,6 @@
 ;;
 
 ;;; Code:
-
 (require 'untermin)
 (require 'dash)
 (require 'cl-macs)
@@ -82,12 +81,6 @@
    ("M-b" delete-backward-sexp)
    ))
 (emotion-define-cmd evim-D "Emulate VIM D command." #'evim--delete nil #'end-of-line)
-(defun evim-visual-delete ()
-  "Delete region."
-  (interactive)
-  (if rectangle-mark-mode
-      (call-interactively #'kill-rectangle)
-    (call-interactively #'kill-region)))
 
 (defun evim--yank (start end)
   "Save text from START to END position."
@@ -175,12 +168,24 @@
   (forward-char)
   (evim-transition-to 'evim-insert-mode))
 
+(defun evim-B ()
+  "Move backward previous WORD."
+  (interactive)
+  (backward-char)
+  (forward-whitespace -1)
+  (forward-whitespace +1))
+
 (defun evim-H ()
   (interactive)
   (move-to-window-line 0))
 
 (defun evim-i ()
   (interactive)
+  (evim-transition-to 'evim-insert-mode))
+
+(defun evim-I ()
+  (interactive)
+  (end-of-line)
   (evim-transition-to 'evim-insert-mode))
 
 (defun evim-L ()
@@ -199,7 +204,7 @@
   (delete-char 1))
 
 (defun evim-replace-char (newc)
-  (interactive "sEnter char: ")
+  (interactive "cEnter char: ")
   (save-excursion
     (let* ((beg (point))
            (end (1+ (point)))
