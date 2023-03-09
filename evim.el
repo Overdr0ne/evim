@@ -61,7 +61,12 @@ the mode, `toggle' toggles the state.")
        :keymap (let ((map (make-sparse-keymap)))
                  (set-keymap-parent map ,(intern (concat "evim-" (symbol-name parent) "-mode-map")))
                  map)
-       :group 'evim)))
+       :group 'evim)
+     (defun ,(intern (concat "evim-" (symbol-name parent) "-" (symbol-name child) "-run-parent-hooks")), ()
+       (run-hooks ',(intern (concat "evim-" (symbol-name parent) "-mode-hook"))))
+     (add-hook #',(intern (concat "evim-" (symbol-name parent) "-" (symbol-name child) "-mode-hook"))
+               #',(intern (concat "evim-" (symbol-name parent) "-" (symbol-name child) "-run-parent-hooks"))
+               )))
 
 (evim-define-mode insert)
 (skey-define-keys
