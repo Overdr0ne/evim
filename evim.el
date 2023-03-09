@@ -202,6 +202,8 @@ the mode, `toggle' toggles the state.")
 (skey-define-keys
  '(evim-visual-mode-map)
  '(
+   (">" indent-rigidly-right)
+   ("<" indent-rigidly-left)
    ("/" evim-comment-region)
    ("<C-[>" evim-visual-escape)
    ("C-g" evim-visual-escape)
