@@ -169,7 +169,7 @@ process."
    ("C-h" term-send-backspace)
    ("C-n" term-send-down)
    ("C-p" term-send-up)
-   ("C-v" yank)
+   ("C-v" term-primary-yank)
 
    ("<backspace>" term-send-backspace)
    ("SPC" term-send-raw)
