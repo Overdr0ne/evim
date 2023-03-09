@@ -31,6 +31,7 @@
 (require 'cl-macs)
 (require 'cl-extra)
 (require 'state)
+(require 'skey)
 
 (defun evim-motion-cmd (cmd start-motion end-motion)
   (let ((beg (save-excursion
@@ -191,9 +192,10 @@ the mode, `toggle' toggles the state.")
        :group 'evim)))
 
 (evim-define-mode insert)
-(evim-define-keys
- '(evim-insert-keymap)
+(skey-define-keys
+ '(evim-insert-mode-map)
  '(
+   (";" (lambda () (interactive) (insert ";")))
    ("C-a" beginning-of-line)
    ("C-e" end-of-line)
    ("C-f" forward-char)
@@ -204,8 +206,6 @@ the mode, `toggle' toggles the state.")
    ("C-s" isearch-forward)
    ("C-v" yank)
    ("C-h" xah-delete-backward-char-or-bracket-text)
-   ;; ("M-w" forward-word)
-   ;; ("M-b" backward-word)
    ("<return>" newline-and-indent)
    ("<C-[>" (lambda () (interactive) (state-transition 'evim-insert-mode 'evim-normal-mode))))
  )
@@ -268,28 +268,28 @@ the mode, `toggle' toggles the state.")
   (delete-char 1))
 
 (defvar evim-lb-keymap (make-sparse-keymap))
-(evim-define-keys
+(skey-define-keys
  '(evim-lb-keymap)
  `(
    ("(" backward-up-list)
    ("[" beginning-of-defun)
    ))
 (defvar evim-rb-keymap (make-sparse-keymap))
-(evim-define-keys
+(skey-define-keys
  '(evim-rb-keymap)
  `(
    (")" up-list)
    ("]" end-of-defun)))
 
 (defvar evim-g-keymap (make-sparse-keymap))
-(evim-define-keys
+(skey-define-keys
  '(evim-g-keymap)
  `(
    ("g" beginning-of-buffer)
    ("G" end-of-buffer)))
 
 (defvar evim-z-keymap (make-sparse-keymap))
-(evim-define-keys
+(skey-define-keys
  '(evim-z-keymap)
  `(
    ("z" recenter)))
@@ -311,14 +311,28 @@ the mode, `toggle' toggles the state.")
 (define-key evim-normal-mode-map [control-bracketleft] #'evim-normal-mode)
 (add-hook 'evim-normal-mode-hook (lambda () (when evim-normal-mode (setq-local cursor-type t))))
 (add-hook 'evim-insert-mode-hook (lambda () (when evim-insert-mode (setq-local cursor-type 'bar))))
+;; (add-hook 'evim-insert-mode-hook (lambda () (when (not evim-insert-mode) (setq-local cursor-type t))))
 
-(evim-define-keys
- '(evim-normal-keymap evim-visual-keymap)
+(defvar evim-hjkl-keymap (make-sparse-keymap))
+(skey-define-keys
+ '(evim-hjkl-keymap)
+ '(
+   ("h" backward-char)
+   ("j" next-line)
+   ("k" previous-line)
+   ("l" forward-char)
+   ))
+
+(evim-define-mode visual)
+(skey-define-keys
+ '(evim-normal-mode-map evim-visual-mode-map)
  `(
+   ("/" comment-line)
    ("[" ,evim-lb-keymap)
    ("]" ,evim-rb-keymap)
    ("= =" evim-indent)
    ("= a" sam-indent-all)
+   ("+" goto-line)
    ("0" beginning-of-line)
    ("$" end-of-line)
    ("a" evim-a)
@@ -337,7 +351,7 @@ the mode, `toggle' toggles the state.")
    ("l" forward-char)
    ("L" evim-L)
    ("M" move-to-window-line-top-bottom)
-   ("n" isearch-repeat-forwar)
+   ("n" isearch-repeat-forward)
    ("o" evim-open-line-below)
    ("O" evim-open-line-above)
    ("p" ,evim-paste-keymap)
@@ -350,60 +364,62 @@ the mode, `toggle' toggles the state.")
    ("c" ,evim-cut-keymap)
    ("x" evim-x)
    ("u" undo)
-   ("M-y" evim-M-y)
+   ("M-y" evim-yank-sexp)
    ("z" ,evim-z-keymap)
    ))
 
 (defface evim-highlight
   '((t
      :inherit region
-     ;; :box (:line-width -3 :style released-button)
-     ;; :weight bold
      ))
   "Face for evim highlighting.")
 
-(evim-define-mode visual)
-(defvar evim-mark (make-marker))
 (defvar evim-region-overlay nil)
 (defun evim-set-marker ()
   (interactive)
-  (set-marker evim-mark (point)))
+  (set-marker (mark-marker) (point)))
 (defun evim-highlight-region ()
   (interactive)
   (if evim-region-overlay
-      (move-overlay evim-region-overlay (marker-position evim-mark) (point))
-    (setq evim-region-overlay (make-overlay (marker-position evim-mark) (point))))
-  (overlay-put evim-region-overlay 'face 'evim-highlight))
+      (move-overlay evim-region-overlay (marker-position (mark-marker)) (point))
+    (setq evim-region-overlay (make-overlay (marker-position (mark-marker)) (point))))
+  (overlay-put evim-region-overlay 'face 'evim-highlight)
+  (setq-local mark-active t))
 (defun evim-unhighlight-region ()
   (interactive)
-  (delete-overlay evim-region-overlay))
+  (delete-overlay evim-region-overlay)
+  (setq-local mark-active nil))
 (defun evim--visual-mode-enable ()
   (interactive)
-  (setq-local cursor-type 'bar)
-  (evim-set-marker)
-  (add-hook 'post-command-hook 'evim-highlight-region))
+  (when evim-visual-mode
+    (setq-local cursor-type 'bar)
+    (evim-set-marker)
+    (add-hook 'post-command-hook 'evim-highlight-region)))
+(add-hook 'evim-visual-mode-hook #'evim--visual-mode-enable)
 (defun evim--visual-mode-disable ()
   (interactive)
-  (setq-local cursor-type t)
-  (remove-hook 'post-command-hook 'evim-highlight-region)
-  (evim-unhighlight-region))
+  (unless evim-visual-mode
+    (setq-local cursor-type t)
+    (remove-hook 'post-command-hook 'evim-highlight-region)
+    (evim-unhighlight-region)))
+(add-hook 'evim-visual-mode-hook #'evim--visual-mode-disable)
 (defun evim-kill-region ()
   (interactive)
-  (kill-region (marker-position evim-mark) (point))
+  (kill-region (marker-position (mark-marker)) (point))
   (state-transition 'evim-visual-mode 'evim-normal-mode))
 (defun evim-copy-region-as-kill ()
   (interactive)
-  (copy-region-as-kill (marker-position evim-mark) (point))
+  (copy-region-as-kill (marker-position (mark-marker)) (point))
   (state-transition 'evim-visual-mode 'evim-normal-mode))
 (defun evim-visual-escape ()
   (interactive)
   (state-transition 'evim-visual-mode 'evim-normal-mode))
 (defun evim-comment-region ()
   (interactive)
-  (comment-or-uncomment-region (marker-position evim-mark) (point))
+  (comment-or-uncomment-region (marker-position (mark-marker)) (point))
   (state-transition 'evim-visual-mode 'evim-normal-mode))
-(evim-define-keys
- '(evim-visual-keymap)
+(skey-define-keys
+ '(evim-visual-mode-map)
  '(
    ("/" evim-comment-region)
    ("<C-[>" evim-visual-escape)
