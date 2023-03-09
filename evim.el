@@ -161,16 +161,8 @@
   (interactive)
   (evim-paste-at (1+ (line-end-position))))
 
-(defvar evim-insert-keymap (make-composed-keymap '(text-mode-map)))
-(defvar evim-normal-keymap (make-sparse-keymap))
-(defvar evim-visual-keymap (make-sparse-keymap))
-
 (defmacro evim-define-mode (name)
-  `(let ((mode-sym ',(intern (concat "evim-" (symbol-name name) "-mode"))))
-     (defun ,(intern (concat "evim--" (symbol-name name) "-mode-enable")) nil)
-     (defun ,(intern (concat "evim--" (symbol-name name) "-mode-disable")) nil)
-     (defun ,(intern (concat "evim-" (symbol-name name) "-mode-enable")) () (interactive) (funcall mode-sym +1))
-     (defun ,(intern (concat "evim-" (symbol-name name) "-mode-disable")) () (interactive) (funcall mode-sym -1))
+  `(progn
      (define-minor-mode ,(intern (concat "evim-" (symbol-name name) "-mode"))
        ,(concat "Toggle Evim " (symbol-name name) " minor mode.
 
