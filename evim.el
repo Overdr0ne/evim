@@ -308,10 +308,9 @@ the mode, `toggle' toggles the state.")
 
 (evim-define-mode normal)
 
-(define-key evim-normal-keymap [control-bracketleft] #'evim-normal-mode)
-(defun evim--normal-mode-enable () (setq-local cursor-type t))
-(defun evim--insert-mode-enable () (setq-local cursor-type 'bar))
-(defun evim--insert-mode-disable () (setq-local cursor-type t))
+(define-key evim-normal-mode-map [control-bracketleft] #'evim-normal-mode)
+(add-hook 'evim-normal-mode-hook (lambda () (when evim-normal-mode (setq-local cursor-type t))))
+(add-hook 'evim-insert-mode-hook (lambda () (when evim-insert-mode (setq-local cursor-type 'bar))))
 
 (evim-define-keys
  '(evim-normal-keymap evim-visual-keymap)
