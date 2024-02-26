@@ -24,45 +24,24 @@
 
 ;;; Code:
 
-(evim-define-derived-mode lisp normal)
-(evim-define-derived-mode lisp visual)
-(evim-define-derived-mode lisp insert)
+(evim-define-default-derived-modes 'lisp)
 
-(defun evim-lisp-escape ()
+(defun evim-forward-to-sexp ()
   (interactive)
-  (evim-transition-to 'evim-normal-lisp-mode))
-
-(defun evim-lisp-A ()
-  (interactive)
-  (end-of-line)
-  (evim-transition-to 'evim-insert-lisp-mode))
-
-(defun evim-lisp-a ()
-  (interactive)
-  (forward-char)
-  (evim-transition-to 'evim-insert-lisp-mode))
-
-(defun evim-lisp-i ()
-  (interactive)
-  (evim-transition-to 'evim-insert-lisp-mode))
+  (when (catch 'scan-error
+          (forward-sexp 2 t)
+        (forward-sexp 1 t)))
+  (backward-sexp))
 
 (skey-define-keys
  '(evim-normal-lisp-mode-map)
  `(
-   ("i" sam-insert-at-end-of-form)))
+   ("M-w" evim-forward-to-sexp)
+   ("M-b" backward-sexp)
+   ))
 
-(skey-define-keys
- '(evim-normal-lisp-mode-map)
- `(
-   ("a" evim-lisp-a)
-   ("A" evim-lisp-A)
-   ("i" evim-lisp-i)))
-
-(skey-define-keys
- '(evim-insert-lisp-mode-map)
- `(
-   ("<C-[>" evim-lisp-escape)
-))
+(add-hook 'lisp-mode-hook #'evim-normal-lisp-mode)
+(add-hook 'emacs-lisp-mode-hook #'evim-normal-lisp-mode)
 
 (provide 'evim-lisp)
 ;;; evim-lisp.el ends here

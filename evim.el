@@ -72,6 +72,62 @@ the mode, `toggle' toggles the state.")
              (setq evim--current-mode ',(intern (concat "evim-" (symbol-name parent) "-" (symbol-name child) "-mode"))))
          (run-hooks ',(intern (concat "evim-" (symbol-name parent) "-mode-off-hook")))))))
 
+(defun evim-define-default-derived-modes (child)
+  (eval
+   `(progn
+      (evim-define-derived-mode ,child normal)
+      (evim-define-derived-mode ,child visual)
+      (evim-define-derived-mode ,child insert)
+      ;; Setup all the weird hooks necessary to automatically switch to/from visual mode
+      ;; when the mark is activated/deactivated
+      (defun ,(intern (concat "evim-" (symbol-name child) "-escape")) ()
+        (interactive)
+        (evim-transition-to ',(intern (concat "evim-normal-" (symbol-name child) "-mode"))))
+      (defun ,(intern (concat "evim-" (symbol-name child) "--activate-mark")) ()
+        (evim-transition-to ',(intern (concat "evim-visual-" (symbol-name child) "-mode"))))
+      (defun ,(intern (concat "evim-" (symbol-name child) "--deactivate-mark")) ()
+        (,(intern (concat "evim-" (symbol-name child) "-escape"))))
+      (defun ,(intern (concat "evim-" (symbol-name child) "--normal-mode-enable")) ()
+        (setq-local cursor-type t)
+        ;; TODO: find a cleaner way to add these hooks only when
+        ;; when a given evim mode is being used.
+        (evim-normal-mode -1)
+        (remove-hook 'activate-mark-hook #'evim--activate-mark t)
+        (remove-hook 'deactivate-mark-hook #'evim--deactivate-mark t)
+        (add-hook 'activate-mark-hook
+                  #',(intern (concat "evim-" (symbol-name child) "--activate-mark")) 0 t)
+        (add-hook 'deactivate-mark-hook
+                  #',(intern (concat "evim-" (symbol-name child) "--deactivate-mark")) 0 t))
+      (add-hook ',(intern (concat "evim-normal-" (symbol-name child) "-mode-on-hook"))
+                #',(intern (concat "evim-" (symbol-name child) "--normal-mode-enable")))
+
+      (defun ,(intern (concat "evim-" (symbol-name child) "-A")) ()
+        (interactive)
+        (end-of-line)
+        (evim-transition-to ',(intern (concat "evim-insert-" (symbol-name child) "-mode"))))
+
+      (defun ,(intern (concat "evim-" (symbol-name child) "-a")) ()
+        (interactive)
+        (forward-char)
+        (evim-transition-to ',(intern (concat "evim-insert-" (symbol-name child) "-mode"))))
+
+      (defun ,(intern (concat "evim-" (symbol-name child) "-i")) ()
+        (interactive)
+        (evim-transition-to ',(intern (concat "evim-insert-" (symbol-name child) "-mode"))))
+
+      (skey-define-keys
+       (list ',(intern (concat "evim-normal-" (symbol-name child) "-mode-map")))
+       (list
+         (list "a" ',(intern (concat "evim-" (symbol-name child) "-a")))
+         (list "A" ',(intern (concat "evim-" (symbol-name child) "-A")))
+         (list "i" ',(intern (concat "evim-" (symbol-name child) "-i")))
+         ))
+
+      (skey-define-keys
+       (list ',(intern (concat "evim-insert-" (symbol-name child) "-mode-map")))
+       (list
+         (list "<C-[>" ',(intern (concat "evim-" (symbol-name child) "-escape"))))))))
+
 (defun evim-transition-to (target-mode)
   "Transition from evim--curent-mode to TARGET-MODE."
   (state-transition evim--current-mode target-mode))
@@ -234,6 +290,8 @@ the mode, `toggle' toggles the state.")
 
 (require 'evim-term)
 (require 'evim-lisp)
+(require 'evim-python)
+(require 'evim-Info)
 
 (provide 'evim)
 ;;; evim.el ends here
