@@ -138,6 +138,7 @@ process."
    ("\\" term-send-raw)
    ("/" term-send-raw)
    ("'" term-send-raw)
+   ("`" term-send-raw)
    ("\"" term-send-raw)
    ("-" term-send-raw)
    ("=" term-send-raw)

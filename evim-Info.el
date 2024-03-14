@@ -26,6 +26,14 @@
 
 (evim-define-default-derived-modes 'Info)
 
+(skey-define-keys
+ '(evim-normal-Info-mode-map)
+ `(
+   ("q" nil)
+   ("q" quit-window)
+   ))
+
+(remove-hook 'Info-mode-hook #'evim-normal-mode)
 (add-hook 'Info-mode-hook #'evim-normal-Info-mode)
 
 (provide 'evim-Info)

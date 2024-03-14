@@ -1,12 +1,12 @@
-;;; evim-lisp.el --- lisp modeset for evim           -*- lexical-binding: t; -*-
+;;; evim-helpful.el --- Info modeset for evim           -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023  Sam
 
 ;; Author: Sam <scmorris.dev@gmail.com>
-;; Keywords: lisp, tools
+;; Keywords: Info, tools
 
 ;; This program is free software; you can redistribute it and/or modify
-;; it under the lisps of the GNU General Public License as published by
+;; it under the Infos of the GNU General Public License as published by
 ;; the Free Software Foundation, either version 3 of the License, or
 ;; (at your option) any later version.
 
@@ -24,24 +24,17 @@
 
 ;;; Code:
 
-(evim-define-default-derived-modes 'lisp)
-
-(defun evim-forward-to-sexp ()
-  (interactive)
-  (condition-case err
-      (forward-sexp 2)
-      (scan-error (forward-sexp 1)))
-  (backward-sexp))
+(evim-define-default-derived-modes 'helpful)
 
 (skey-define-keys
- '(evim-normal-lisp-mode-map)
+ '(evim-normal-helpful-mode-map)
  `(
-   ("M-w" evim-forward-to-sexp)
-   ("M-b" backward-sexp)
+   ("q" nil)
+   ("q" quit-window)
    ))
 
-(add-hook 'lisp-mode-hook #'evim-normal-lisp-mode)
-(add-hook 'emacs-lisp-mode-hook #'evim-normal-lisp-mode)
+(remove-hook 'helpful-mode-hook #'evim-normal-mode)
+(add-hook 'helpful-mode-hook #'evim-normal-helpful-mode)
 
-(provide 'evim-lisp)
-;;; evim-lisp.el ends here
+(provide 'evim-helpful)
+;;; evim-helpful.el ends here

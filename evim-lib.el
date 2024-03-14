@@ -84,7 +84,9 @@
 
 (defun evim--yank (start end)
   "Save text from START to END position."
-  (pulse-momentary-highlight-region start end)
+  (let ((pulse-flag t)
+        (pulse-delay .06))
+    (pulse-momentary-highlight-region start end))
   (copy-region-as-kill start end))
 
 (evim-define-interface evim--yank "yank" "y")
@@ -100,10 +102,16 @@
 (defun evim--cut (start end)
   "Cut text from START to END position."
   (evim--delete start end)
-  (evil-insert 1))
+  (evim-transition-to 'evim-insert-mode))
 
 (evim-define-interface evim--cut "cut" "c")
 (emotion-define-cmd evim-C "Emulate VIM C command." #'evim--cut nil #'end-of-line)
+
+(defun evim-visual-cut ()
+  (interactive)
+  (evim--delete (point) (mark))
+  (deactivate-mark t)
+  (evim-transition-to 'evim-insert-mode))
 
 (defun evim-paste-at (pos)
   (save-excursion

@@ -33,7 +33,6 @@
 (require 'skey)
 (require 'evim-lib)
 (require 'line-mark)
-(require 'untermin)
 
 (defvar-local evim--current-mode nil)
 (defmacro evim-define-mode (name)
@@ -284,7 +283,9 @@ the mode, `toggle' toggles the state.")
    ("<" indent-rigidly-left)
    ("/" comment-or-uncomment-region)
    ("<C-[>" keyboard-quit)
+   ("c" evim-visual-cut)
    ("d" kill-region)
+   ("s" isearch-forward)
    ("v" er/expand-region)
    ("y" copy-region-as-kill)))
 
@@ -292,6 +293,7 @@ the mode, `toggle' toggles the state.")
 (require 'evim-lisp)
 (require 'evim-python)
 (require 'evim-Info)
+(require 'evim-helpful)
 
 (provide 'evim)
 ;;; evim.el ends here
