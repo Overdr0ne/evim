@@ -80,14 +80,21 @@
    ("M-w" delete-forward-sexp)
    ("M-b" delete-backward-sexp)
    ))
-(emotion-define-cmd evim-D "Emulate VIM D command." #'evim--delete nil #'end-of-line)
+(emotion-define-cmd evim-D
+                    "Emulate VIM D command."
+                    #'evim--delete nil
+                    (lambda ()
+                      (interactive)
+                      (move-end-of-line nil)))
 
 (defun evim--yank (start end)
   "Save text from START to END position."
   (let ((pulse-flag t)
         (pulse-delay .06))
     (pulse-momentary-highlight-region start end))
-  (copy-region-as-kill start end))
+  (let ((start start)
+        (end end))
+    (copy-region-as-kill start end)))
 
 (evim-define-interface evim--yank "yank" "y")
 (skey-define-keys
@@ -96,7 +103,12 @@
    ("M-w" yank-forward-sexp)
    ("M-b" yank-backward-sexp)
    ))
-(emotion-define-cmd evim-Y "Emulate VIM Y command." #'evim--yank nil #'end-of-line)
+(emotion-define-cmd evim-Y
+                    "Emulate VIM Y command."
+                    #'evim--yank nil
+                    (lambda ()
+                      (interactive)
+                      (move-end-of-line nil)))
 (emotion-define-cmd evim-yank-sexp "Kill the following sexp." #'evim--yank nil #'forward-sexp)
 
 (defun evim--cut (start end)
@@ -105,7 +117,12 @@
   (evim-transition-to 'evim-insert-mode))
 
 (evim-define-interface evim--cut "cut" "c")
-(emotion-define-cmd evim-C "Emulate VIM C command." #'evim--cut nil #'end-of-line)
+(emotion-define-cmd evim-C
+                    "Emulate VIM C command."
+                    #'evim--cut nil
+                    (lambda ()
+                      (interactive)
+                      (move-end-of-line nil)))
 
 (defun evim-visual-cut ()
   (interactive)
@@ -134,17 +151,40 @@
   (interactive)
   (evim-paste-at (point)))
 
+(defun evim-insert-line-below ()
+  "Insert an empty line below the current line."
+  (interactive)
+  (save-excursion
+    (end-of-line)
+    (open-line 1)))
+
+(defun evim-insert-line-above ()
+  "Insert an empty line above the current line."
+  (interactive)
+  (save-excursion
+    (end-of-line 0)
+    (open-line 1)))
+
 (defun evim-pk ()
   "Insert an empty line above the current line."
   (interactive)
   (save-excursion
     (beginning-of-line)
-    (evim-paste-at (point))))
+    (when (not (string= (substring-no-properties (current-kill 0) -1) "\n"))
+      (open-line 1))
+    (evim-paste-at (point))
+    )
+  )
 
 (defun evim-pj ()
   "Insert an empty line above the current line."
   (interactive)
-  (evim-paste-at (1+ (line-end-position))))
+  (save-excursion
+    (next-line)
+    (beginning-of-line)
+    (when (not (string= (substring-no-properties (current-kill 0) -1) "\n"))
+      (open-line 1))
+    (evim-paste-at (point))))
 
 (defun evim-open-line-below ()
   (interactive)

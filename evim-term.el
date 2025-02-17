@@ -56,12 +56,19 @@
   )
 (add-hook 'evim-normal-term-mode-on-hook #'evim--normal-term-mode-enable)
 
+(defun evim-primary-yank ()
+          (interactive)
+          (term-primary-yank)
+          (evim-transition-to 'evim-insert-term-mode))
+
 (skey-define-keys
  '(evim-normal-term-mode-map)
  `(
    ("a" evim-term-a)
    ("A" evim-term-A)
-   ("i" evim-term-i)))
+   ("i" evim-term-i)
+   ("p" evim-primary-yank)
+))
 
 (defun evim--insert-term-mode-disable  ()
   "Switch to line (\"cooked\") sub-mode of term mode.
