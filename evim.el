@@ -292,6 +292,7 @@ the mode, `toggle' toggles the state.")
 (require 'evim-term)
 (require 'evim-lisp)
 (require 'evim-python)
+(require 'evim-clojure)
 (require 'evim-Info)
 (require 'evim-helpful)
 
