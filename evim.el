@@ -117,15 +117,14 @@ the mode, `toggle' toggles the state.")
       (skey-define-keys
        (list ',(intern (concat "evim-normal-" (symbol-name child) "-mode-map")))
        (list
-         (list "a" ',(intern (concat "evim-" (symbol-name child) "-a")))
-         (list "A" ',(intern (concat "evim-" (symbol-name child) "-A")))
-         (list "i" ',(intern (concat "evim-" (symbol-name child) "-i")))
-         ))
+        (list "a" ',(intern (concat "evim-" (symbol-name child) "-a")))
+        (list "A" ',(intern (concat "evim-" (symbol-name child) "-A")))
+        (list "i" ',(intern (concat "evim-" (symbol-name child) "-i")))))
 
       (skey-define-keys
        (list ',(intern (concat "evim-insert-" (symbol-name child) "-mode-map")))
        (list
-         (list "<C-[>" ',(intern (concat "evim-" (symbol-name child) "-escape"))))))))
+        (list "<C-[>" ',(intern (concat "evim-" (symbol-name child) "-escape"))))))))
 
 (defun evim-transition-to (target-mode)
   "Transition from evim--curent-mode to TARGET-MODE."
