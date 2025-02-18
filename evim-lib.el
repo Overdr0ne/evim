@@ -261,6 +261,12 @@
            (oldc (buffer-substring-no-properties beg end)))
       (replace-string-in-region oldc newc beg end))))
 
+(defun evim-replace-region-with-kill ()
+  (interactive)
+  (delete-region (mark) (point))
+  (evim-transition-to 'evim-normal-mode)
+  (yank))
+
 (defun evim-indent ()
   (interactive)
   (indent-according-to-mode))
