@@ -79,18 +79,14 @@
   (kill-region beg end))
 
 (evim-define-interface evim--delete "delete" "d")
-;; (skey-define-keys
-;;  '(evim-delete-keymap)
-;;  `(
-;;    ("M-w" delete-forward-sexp)
-;;    ("M-b" delete-backward-sexp)
-;;    ))
 (emotion-define-cmd evim-D
                     "Emulate VIM D command."
                     #'evim--delete nil
                     (lambda ()
                       (interactive)
                       (move-end-of-line nil)))
+(emotion-define-cmd evim-delete-forward-sexp "Kill the following sexp." #'evim--delete nil #'forward-sexp)
+(emotion-define-cmd evim-delete-backward-sexp "Kill the preceding sexp." #'evim--delete nil #'backward-sexp)
 
 (defun evim--yank (start end)
   "Save text from START to END position."
@@ -108,7 +104,8 @@
                     (lambda ()
                       (interactive)
                       (move-end-of-line nil)))
-(emotion-define-cmd evim-yank-sexp "Kill the following sexp." #'evim--yank nil #'forward-sexp)
+(emotion-define-cmd evim-yank-forward-sexp "Copy the following sexp to the kill-ring." #'evim--yank nil #'forward-sexp)
+(emotion-define-cmd evim-yank-backward-sexp "Copy the preceding sexp to the kill-ring." #'evim--yank nil #'backward-sexp)
 
 (defun evim--cut (start end)
   "Cut text from START to END position."
@@ -128,6 +125,8 @@
   (evim--delete (point) (mark))
   (deactivate-mark t)
   (evim-transition-to 'evim-insert-mode))
+(emotion-define-cmd evim-cut-forward-sexp "Kill the following sexp." #'evim--cut nil #'forward-sexp)
+(emotion-define-cmd evim-cut-backward-sexp "Kill the preceding sexp." #'evim--cut nil #'backward-sexp)
 
 (defun evim-paste-at (pos)
   (save-excursion
