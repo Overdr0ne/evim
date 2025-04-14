@@ -26,6 +26,12 @@
 
 (evim-define-default-derived-modes 'lisp)
 
+(skey-define-keys
+ '(evim-insert-lisp-mode-map)
+ `(
+   ("<remap> <evim-escape>" evim-lisp-escape)
+   ))
+
 (defun evim-forward-to-sexp ()
   (interactive)
   (condition-case err

@@ -23,7 +23,6 @@
 ;;
 
 ;;; Code:
-(require 'untermin)
 (require 'dash)
 (require 'cl-macs)
 (require 'cl-extra)

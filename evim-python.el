@@ -29,7 +29,7 @@
 (skey-define-keys
  '(evim-insert-python-mode-map)
  `(
-   ("<C-[>" evim-python-escape)
+   ("<remap> <evim-escape>" evim-python-escape)
    ))
 
 (skey-define-keys

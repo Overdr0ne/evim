@@ -124,7 +124,9 @@ the mode, `toggle' toggles the state.")
       (skey-define-keys
        (list ',(intern (concat "evim-insert-" (symbol-name child) "-mode-map")))
        (list
-        (list "<C-[>" ',(intern (concat "evim-" (symbol-name child) "-escape"))))))))
+        (list "<remap> <evim-escape>" ',(intern (concat "evim-" (symbol-name child) "-escape")))
+        ))
+      )))
 
 (defun evim-transition-to (target-mode)
   "Transition from evim--curent-mode to TARGET-MODE."
@@ -143,7 +145,6 @@ the mode, `toggle' toggles the state.")
 (skey-define-keys
  '(evim-insert-mode-map)
  `(
-   ("M-x" execute-extended-command)
    (";" self-insert-command)
    ("?" self-insert-command)
    ("SPC" self-insert-command)
@@ -158,7 +159,8 @@ the mode, `toggle' toggles the state.")
    ("C-v" yank)
    ("C-h" xah-delete-backward-char-or-bracket-text)
    ("<return>" newline-and-indent)
-   ("<C-[>" evim-escape)
+   ("<escape>" evim-escape)
+   ("M-x" execute-extended-command)
    )
  )
 
@@ -266,8 +268,8 @@ the mode, `toggle' toggles the state.")
    ("M-y" evim-yank-sexp)
    ("z" ,evim-z-keymap)))
 
-(define-key evim-normal-mode-map (kbd "d") nil)
-(define-key evim-normal-mode-map (kbd "d") evim-delete-keymap)
+(keymap-set evim-normal-mode-map "d" nil)
+(keymap-set evim-normal-mode-map "d" evim-delete-keymap)
 
 (defun evim--visual-mode-enable ()
   (setq-local cursor-type 'bar))
@@ -281,7 +283,7 @@ the mode, `toggle' toggles the state.")
    (">" indent-rigidly-right)
    ("<" indent-rigidly-left)
    ("/" comment-or-uncomment-region)
-   ("<C-[>" keyboard-quit)
+   ("<escape>" keyboard-quit)
    ("c" evim-visual-cut)
    ("d" kill-region)
    ("p" evim-replace-region-with-kill)
@@ -295,6 +297,40 @@ the mode, `toggle' toggles the state.")
 (require 'evim-clojure)
 (require 'evim-Info)
 (require 'evim-helpful)
+
+(defcustom evim-major-mode-hooks
+  '( diff-mode-hook text-mode-hook prog-mode-hook conf-mode-hook Info-mode-hook helpful-mode-hook bitbake-mode-hook extempore-mode-hook)
+  "Major mode hooks to initialize the evim state machine")
+
+(defun global-evim-mode--init ()
+
+  (dolist (hook evim-major-mode-hooks)
+    (add-hook hook #'evim-normal-mode))
+  t)
+(defun global-evim-mode--shutdown ()
+  (dolist (hook evim-major-mode-hooks)
+    (remove-hook hook #'evim-normal-mode))
+  nil)
+(defvar global-evim-mode nil
+  "Contains global data for global-evim-mode.")
+;;;###autoload
+(define-minor-mode global-evim-mode
+  "Toggle global evim minor mode.
+
+Interactively with no argument, this command toggles the mode.
+A positive prefix argument enables the mode, any other prefix
+argument disables it.  From Lisp, argument omitted or nil enables
+the mode, `toggle' toggles the state.
+
+When enabled, adds hooks to common major mode sets to begin editing
+in the evim-normal-mode state."
+  :init-value nil
+  :lighter " Evim:global"
+  :group 'evim
+  :global t
+  (if global-evim-mode
+      (setf global-evim-mode (global-evim-mode--init))
+    (setf global-evim-mode (global-evim-mode--shutdown))))
 
 (provide 'evim)
 ;;; evim.el ends here

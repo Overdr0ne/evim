@@ -123,7 +123,7 @@ process."
    ("C-e" term-send-end)
    ("C-f" term-send-right)
    ("C-h" term-send-backspace)
-   ("<C-m>" (lambda () (interactive) (term-send-raw-string "\C-m")))
+   ("C-m" (lambda () (interactive) (term-send-raw-string "\C-m")))
    ("C-n" term-send-down)
    ("C-p" term-send-up)
    ("C-v" term-primary-yank)
@@ -227,7 +227,8 @@ process."
    ("X" term-send-raw)
    ("Y" term-send-raw)
    ("Z" term-send-raw)
-   ("<C-[>" evim-term-escape)))
+   ("<remap> <evim-escape>" evim-term-escape)
+   ))
 
 (defun evim--term-activate-mark ()
   (evim-transition-to 'evim-visual-term-mode))
@@ -272,6 +273,10 @@ and `C-x' being marked as a `term-escape-char'."
 
   (evim-term-setup (getenv "SHELL"))
   (pop-to-buffer term-ansi-buffer-name))
+
+(dolist (hook '(shell-mode-hook))
+  (dolist (fun '(evim-insert-term-mode))
+    (add-hook hook fun)))
 
 (provide 'evim-term)
 ;;; evim-term.el ends here
