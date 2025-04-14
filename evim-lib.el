@@ -46,8 +46,10 @@
             (,prefix "b" nil (lambda () (forward-word -1)))
             (,prefix "B" nil (lambda () (forward-whitespace -1)))
             (,prefix "e" nil forward-word)
-            (,prefix "iw" backward-word forward-word)
-            (,prefix "io" backward-sexp forward-sexp)))
+            (,prefix "M-w" nil forward-sexp)
+            (,prefix "M-b" nil backward-sexp)
+            (,prefix "i w" backward-word forward-word)
+            (,prefix "i o" backward-sexp forward-sexp)))
          (keymap (make-sparse-keymap))
          (kmap-sym ',(intern (concat "evim-" name "-keymap"))))
      (defvar ,(intern (concat "evim-" name "-keymap")))
@@ -56,16 +58,18 @@
               (suff (nth 1 def))
               (start-motion (nth 2 def))
               (end-motion (nth 3 def))
-              (doc-str (concat "Emulate VIM " pref suff " command."))
-              (cmd-sym (intern (concat "evim-" pref suff)))
-              (cmd-str (concat pref suff))
-              (cmd-keys (string-join (cl-subseq (split-string suff "") 1 -1) " ")))
+              (cmd-str (concat pref (string-replace " " "" suff)))
+              (doc-str (concat "Emulate VIM " cmd-str " command."))
+              (cmd-sym (intern (concat "evim-" cmd-str)))
+              ;; (cmd-keys (string-join (cl-subseq (split-string suff "") 1 -1) " "))
+              (cmd-keys suff)
+              )
          (defalias cmd-sym
            (lambda ()
              (interactive)
              (emotion-cmd ',cmd start-motion end-motion))
            doc-str)
-         (define-key keymap (kbd cmd-keys) cmd-sym)
+         (keymap-set keymap cmd-keys cmd-sym)
          ))
      (set kmap-sym keymap)))
 
@@ -76,12 +80,12 @@
   (kill-region beg end))
 
 (evim-define-interface evim--delete "delete" "d")
-(skey-define-keys
- '(evim-delete-keymap)
- `(
-   ("M-w" delete-forward-sexp)
-   ("M-b" delete-backward-sexp)
-   ))
+;; (skey-define-keys
+;;  '(evim-delete-keymap)
+;;  `(
+;;    ("M-w" delete-forward-sexp)
+;;    ("M-b" delete-backward-sexp)
+;;    ))
 (emotion-define-cmd evim-D
                     "Emulate VIM D command."
                     #'evim--delete nil
@@ -99,12 +103,6 @@
     (copy-region-as-kill start end)))
 
 (evim-define-interface evim--yank "yank" "y")
-(skey-define-keys
- '(evim-yank-keymap)
- `(
-   ("M-w" yank-forward-sexp)
-   ("M-b" yank-backward-sexp)
-   ))
 (emotion-define-cmd evim-Y
                     "Emulate VIM Y command."
                     #'evim--yank nil
