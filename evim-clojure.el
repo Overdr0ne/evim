@@ -24,6 +24,8 @@
 
 ;;; Code:
 
+(require 'evim-lib)
+
 (evim-define-default-derived-modes 'clojure)
 
 (defun evim-forward-to-sexp ()

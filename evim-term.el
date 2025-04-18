@@ -25,6 +25,7 @@
 ;;; Code:
 
 (require 'term)
+(require 'evim-lib)
 
 (evim-define-derived-mode term normal)
 (evim-define-derived-mode term visual)

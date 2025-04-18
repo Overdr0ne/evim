@@ -24,6 +24,8 @@
 
 ;;; Code:
 
+(require 'evim-lib)
+
 (evim-define-default-derived-modes 'logview)
 
 (add-hook 'logview-mode-hook #'evim-normal-logview-mode)
